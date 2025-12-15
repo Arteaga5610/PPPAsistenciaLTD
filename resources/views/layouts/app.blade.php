@@ -33,9 +33,10 @@
       color: white;
       position: fixed;
       height: 100vh;
-      overflow-y: auto;
       box-shadow: 2px 0 10px rgba(0,0,0,0.1);
       z-index: 1000;
+      display: flex;
+      flex-direction: column;
     }
     
     .sidebar-header {
@@ -66,6 +67,8 @@
     
     .sidebar-nav {
       padding: 20px 0;
+      flex: 1 1 auto;
+      overflow-y: auto;
     }
     
     .nav-section-title {
@@ -87,6 +90,11 @@
       transition: all 0.2s ease;
       border-left: 3px solid transparent;
     }
+
+    /* Evita que el footer absoluto del sidebar cubra y desactive los enlaces
+       reservando espacio inferior y asegurando el stacking apropiado. */
+    .nav-item { position: relative; z-index: 2; }
+    .sidebar-footer { z-index: 1; }
     
     .nav-item:hover {
       background: rgba(255,255,255,0.1);
@@ -113,12 +121,12 @@
     }
     
     .sidebar-footer {
-      position: absolute;
-      bottom: 0;
+      position: relative;
       width: 100%;
       padding: 20px;
       border-top: 1px solid rgba(255,255,255,0.1);
-      background: rgba(0,0,0,0.1);
+      background: rgba(0,0,0,0.06);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
     }
     
     .user-info {
