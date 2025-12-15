@@ -373,7 +373,7 @@
       <div class="sidebar-header">
         <a href="/" class="sidebar-logo">
           <div class="sidebar-logo-icon"><i class="fas fa-clock"></i></div>
-          <span>ASISTENCIA BIOMETRICO</span>
+          <span>ASISTENCIA</span>
         </a>
       </div>
       
