@@ -177,6 +177,33 @@ protected static function booted()
             ]);
         }
     });
+
+    // Al eliminar un empleado localmente, borrar sus datos relacionados
+    static::deleting(function ($e) {
+        try {
+            // Horarios asociados (por employee_no)
+            \App\Models\WorkSchedule::where('employee_no', $e->employee_no)->delete();
+
+            // Eventos y registros de asistencia
+            if (method_exists($e, 'attendanceEvents')) {
+                $e->attendanceEvents()->delete();
+            }
+            if (method_exists($e, 'attendanceRecordsByNo')) {
+                $e->attendanceRecordsByNo()->delete();
+            }
+            if (method_exists($e, 'attendanceRecords')) {
+                $e->attendanceRecords()->delete();
+            }
+            if (method_exists($e, 'attendanceDays')) {
+                $e->attendanceDays()->delete();
+            }
+        } catch (\Throwable $ex) {
+            Log::warning('Error cleaning related data on employee delete', [
+                'employee_no' => $e->employee_no,
+                'msg' => $ex->getMessage(),
+            ]);
+        }
+    });
 }
 
 
