@@ -65,6 +65,14 @@ Route::middleware('auth')->group(function () {
     
     // Asistencias
     Route::get('/asistencias/hoy', [DashboardController::class, 'todaySchedules'])->name('asistencias.hoy');
+    
+        // Admin SMTP settings
+        Route::get('/admin/mail-settings', [\App\Http\Controllers\Admin\MailSettingsController::class, 'edit'])->name('admin.mailsettings.edit');
+        Route::post('/admin/mail-settings', [\App\Http\Controllers\Admin\MailSettingsController::class, 'update'])->name('admin.mailsettings.update');
+        Route::post('/admin/mail-settings/test', [\App\Http\Controllers\Admin\MailSettingsController::class, 'sendTest'])->name('admin.mailsettings.test');
+
+        // Report sending
+        Route::post('/employees/{employee}/send-report', [\App\Http\Controllers\ReportController::class, 'sendEmployeeReport'])->name('employees.send_report');
 
     // ===================== EMPLEADOS =====================
     

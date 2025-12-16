@@ -315,6 +315,24 @@
         </h1>
     </div>
 
+    {{-- Controles: exportar y enviar reporte (solo si SMTP configurado y empleado tiene email) --}}
+    <div style="margin-bottom: 1.5rem;">
+        @if(!empty($employee->email) && !empty($smtpEnabled))
+            <form method="post" action="{{ route('employees.send_report', $employee) }}" style="display: inline">
+                @csrf
+                <button class="back-link" type="submit" style="background: #27ae60; color: white; border: none;">📤 Exportar y enviar reporte (PDF)</button>
+            </form>
+        @elseif(empty($employee->email))
+            <div class="empty-state" style="padding: 0.5rem; margin-bottom: 0.75rem;">
+                <small>Este empleado no tiene un correo registrado. Agrega un email para permitir el envío de reportes.</small>
+            </div>
+        @else
+            <div class="empty-state" style="padding: 0.5rem; margin-bottom: 0.75rem;">
+                <small>SMTP no configurado. Configura las credenciales en Administración → Mail Settings.</small>
+            </div>
+        @endif
+    </div>
+
     <div class="employee-info-card">
         <div class="icon">👤</div>
         <div class="details">

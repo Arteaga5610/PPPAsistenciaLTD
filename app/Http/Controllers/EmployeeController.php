@@ -108,6 +108,7 @@ public function store(EmployeeRequest $request, HikvisionService $hik): Redirect
     $employee = \App\Models\Employee::create([
         'employee_no' => $employeeNo,
         'name'        => $request->validated('name'),
+        'email'       => $request->validated('email') ?? null,
         'gender'      => $request->validated('gender'),
         'hire_date'   => $request->validated('hire_date') ?? now()->toDateString(), // <---
         'department'  => 'Company',
@@ -191,6 +192,7 @@ public function store(EmployeeRequest $request, HikvisionService $hik): Redirect
 {
     // Actualiza datos locales
     $employee->update([
+        'email'       => $request->validated('email') ?? $employee->email,
         'name'       => $request->validated('name'),
         'gender'     => $request->validated('gender'),
         'hire_date'  => $request->validated('hire_date') ?? $employee->hire_date, // <---

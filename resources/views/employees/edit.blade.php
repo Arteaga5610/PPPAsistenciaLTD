@@ -325,6 +325,22 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="email" class="form-label">
+                        <span class="input-icon">✉️</span>
+                        Correo electrónico
+                    </label>
+                    <input
+                        type="email"
+                        name="email"
+                        id="email"
+                        class="form-input"
+                        value="{{ old('email', $employee->email) }}"
+                        maxlength="128"
+                        placeholder="correo@ejemplo.com"
+                    >
+                </div>
+
+                <div class="form-group">
                     <label class="form-label required">
                         <span class="input-icon">⚧️</span>
                         Género

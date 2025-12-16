@@ -16,6 +16,7 @@ class EmployeeRequest extends FormRequest
     {
     return [
         'name'   => ['required','string','max:128'],
+        'email'  => ['nullable','email','max:128'],
         'gender' => ['required', Rule::in(['male','female','unknown'])],
         'hire_date'  => ['nullable','date'],   // <--- NUEVO
         'hourly_rate' => ['required','numeric','min:0'],

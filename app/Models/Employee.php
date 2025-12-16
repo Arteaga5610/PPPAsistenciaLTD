@@ -10,6 +10,7 @@ class Employee extends Model
 {
     protected $fillable = [
         'employee_no',
+        'email',
         'card_no',
         'name',
         'hire_date',          // <--- NUEVO

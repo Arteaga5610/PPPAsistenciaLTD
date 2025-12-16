@@ -321,6 +321,24 @@
               </div>
             </div>
           </div>
+
+          <!-- Correo electrónico -->
+          <div class="form-group">
+            <label class="form-label-modern">
+              <span class="input-icon">✉️</span>
+              Correo electrónico
+            </label>
+            <input
+              type="email"
+              name="email"
+              class="form-input-modern"
+              value="{{ old('email') }}"
+              placeholder="correo@ejemplo.com"
+            >
+            @error('email')
+              <div class="error-message">{{ $message }}</div>
+            @enderror
+          </div>
         </div>
       </div>
       

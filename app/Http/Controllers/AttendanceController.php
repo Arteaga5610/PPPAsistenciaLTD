@@ -51,7 +51,7 @@ class AttendanceController extends Controller
      * Devuelve:
      * [entryMark, exitMark, obsEntrada, obsSalida, estadoEntrada, estadoSalida]
      */
-private function analyzeDay(
+public function analyzeDay(
     \Illuminate\Support\Carbon $date,
     \App\Models\WorkSchedule $schedule,
     \Illuminate\Support\Collection $events
@@ -177,227 +177,186 @@ private function analyzeDay(
      */
 public function byEmployee(string $employeeNo)
 {
-    // 1) Obtener empleado
-    $employee = Employee::where('employee_no', $employeeNo)->firstOrFail();
+    $data = self::buildRows($employeeNo);
+    $employee = $data['employee'];
+    $rows = $data['rows'];
 
-    // 2) Rango de fechas (30 días atrás y 30 adelante)
-    $today     = Carbon::now('America/Lima')->startOfDay();
-    $baseStart = $today->copy()->subDays(30)->startOfDay();
-    $end       = $today->copy()->addDays(30)->endOfDay();
-
-    // 3) Horarios del empleado
-    $schedules = WorkSchedule::where('employee_no', $employeeNo)
-        ->orderBy('start_date')
-        ->orderBy('created_at')
-        ->get();
-
-    if ($schedules->isEmpty()) {
-        return view('attendance.by_employee', [
-            'employee' => $employee,
-            'rows'     => [],
-        ]);
-    }
-
-    // 4) Desde cuándo mostrar
-    // Mostrar SIEMPRE los últimos 30 días, independientemente de cuándo se crearon los horarios
-    $start = $baseStart->copy();
-    
-    // 5) Eventos de asistencia
-    $events = AttendanceEvent::where('employee_no', $employeeNo)
-        ->whereBetween('event_time', [$start, $end])
-        ->orderBy('event_time')
-        ->get()
-        ->groupBy(function ($e) {
-            return Carbon::parse($e->event_time)->toDateString();
-        });
-
-    // 6) Generar filas día por día
-    $rows   = [];
-    $cursor = $start->copy();
-
-    // Tarifa del empleado
-    $hourlyRate   = (float) ($employee->hourly_rate ?? 0);     // S/ por hora
-    $payPerMinute = $hourlyRate > 0 ? $hourlyRate / 60.0 : 0;  // S/ por minuto
-
-    while ($cursor <= $end) {
-        $dateStr = $cursor->toDateString();
-        $dow     = $cursor->isoWeekday(); // 1=lunes ... 7=domingo
-
-        // Horarios activos ese día
-        $activeSchedules = $schedules->filter(function ($sch) use ($cursor, $dow) {
-            $d = $cursor->toDateString();
-
-            $startDate = $sch->start_date ? $sch->start_date->toDateString() : null;
-            $endDate   = $sch->end_date   ? $sch->end_date->toDateString()   : null;
-
-            if ($startDate && $d < $startDate) return false;
-            if ($endDate   && $d > $endDate)   return false;
-
-            $workDays = is_array($sch->work_days) ? $sch->work_days : [];
-            if (!in_array($dow, $workDays)) return false;
-
-            return true;
-        });
-
-        if ($activeSchedules->isEmpty()) {
-            $cursor->addDay();
-            continue;
-        }
-
-        $dayEvents = $events[$dateStr] ?? collect();
-
-        // ---------- 1er PASO: solo construir los turnos ----------
-        $turnos = [];
-
-        foreach ($activeSchedules as $sch) {
-            $entryScheduled = $sch->entry_time;
-            $exitScheduled  = $sch->exit_time;
-
-            $entryMark = $exitMark = $obsEntrada = $obsSalida = $estadoEntrada = $estadoSalida = null;
-
-            if (!$cursor->isFuture()) {
-                [
-                    $entryMark,
-                    $exitMark,
-                    $obsEntrada,
-                    $obsSalida,
-                    $estadoEntrada,
-                    $estadoSalida,
-                ] = $this->analyzeDay($cursor, $sch, $dayEvents);
-            }
-
-            $turnos[] = [
-                'entry_scheduled' => $entryScheduled,
-                'exit_scheduled'  => $exitScheduled,
-                'entry_mark'      => $entryMark,
-                'exit_mark'       => $exitMark,
-                'obs_entrada'     => $obsEntrada,
-                'obs_salida'      => $obsSalida,
-                'estado_entrada'  => $estadoEntrada,
-                'estado_salida'   => $estadoSalida,
-            ];
-        }
-
-        // ---------- 2º PASO: calcular pagos y descuentos ----------
-        $totalBasePay      = 0.0;
-        $totalDailyPay     = 0.0;
-        $totalMinutesLate  = 0;
-        $totalMinutesEarly = 0;
-        $totalDiscount     = 0.0;
-
-        if ($hourlyRate > 0) {
-            foreach ($turnos as $t) {
-                // 1) Validar que el turno tenga ambas marcas y no sea "Falta"
-                if (
-                    !($t['entry_mark'] instanceof \Carbon\Carbon) ||
-                    !($t['exit_mark']  instanceof \Carbon\Carbon) ||
-                    $t['estado_entrada'] === '❌ Falta' ||
-                    $t['estado_salida']  === '❌ Falta'
-                ) {
-                    continue; // este turno no se paga
-                }
-
-                // 2) Horas programadas del turno
-                $entryAt = Carbon::parse(
-                    $cursor->toDateString() . ' ' . $t['entry_scheduled'],
-                    'America/Lima'
-                );
-                $exitAt  = Carbon::parse(
-                    $cursor->toDateString() . ' ' . $t['exit_scheduled'],
-                    'America/Lima'
-                );
-
-                // Duración del turno (en minutos)
-                $durationMinutes = max(0, $entryAt->diffInMinutes($exitAt));
-                if ($durationMinutes <= 0) {
-                    continue;
-                }
-
-                // Pago base del turno = horas * tarifa/hora
-                $baseTurnPay = ($durationMinutes / 60.0) * $hourlyRate;
-
-                // 3) Minutos de tardanza (entrada DESPUÉS de la hora programada)
-                // IMPORTANTE: Solo contar minutos COMPLETOS, ignorar segundos
-                $minutesLate = 0;
-                if ($t['entry_mark']->gt($entryAt)) {
-                    // Truncar segundos antes de calcular diferencia
-                    $entryAtNoSec = $entryAt->copy()->second(0);
-                    $entryMarkNoSec = $t['entry_mark']->copy()->second(0);
-                    $minutesLate = $entryAtNoSec->diffInMinutes($entryMarkNoSec, false);
-                    $minutesLate = max(0, $minutesLate); // solo positivos
-                }
-
-                // 4) Minutos de salida anticipada (salida ANTES de la hora programada)
-                // IMPORTANTE: Solo contar minutos COMPLETOS, ignorar segundos
-                $minutesEarly = 0;
-                if ($t['exit_mark']->lt($exitAt)) {
-                    // Truncar segundos antes de calcular diferencia
-                    $exitMarkNoSec = $t['exit_mark']->copy()->second(0);
-                    $exitAtNoSec = $exitAt->copy()->second(0);
-                    $minutesEarly = $exitMarkNoSec->diffInMinutes($exitAtNoSec, false);
-                    $minutesEarly = max(0, $minutesEarly); // solo positivos
-                }
-
-                // 5) Descuento del turno
-                $discountTurn = ($minutesLate + $minutesEarly) * $payPerMinute;
-                $payTurn      = max(0, $baseTurnPay - $discountTurn);
-
-                // 6) Acumular totales del día
-                $totalBasePay      += $baseTurnPay;
-                $totalDailyPay     += $payTurn;
-                $totalMinutesLate  += $minutesLate;
-                $totalMinutesEarly += $minutesEarly;
-                $totalDiscount     += $discountTurn;
-            }
-        }
-
-
-        // ---- Resultado final del día ----
-        $payAmount = null;
-        $payInfo   = null;
-
-        if ($hourlyRate > 0 && $totalBasePay > 0) {
-            $totalBasePay      = round($totalBasePay, 2);
-            $totalDailyPay     = round($totalDailyPay, 2);
-            $totalDiscount     = round($totalDiscount, 2);
-            $totalMinutesLate  = (int) $totalMinutesLate;
-            $totalMinutesEarly = (int) $totalMinutesEarly;
-
-            $payAmount = $totalDailyPay;
-
-            if ($totalMinutesLate > 0 || $totalMinutesEarly > 0) {
-                $payInfo = sprintf(
-                    'Base día: S/ %.2f. Se descontó S/ %.2f por %d min de tardanza y %d min de salida anticipada.',
-                    $totalBasePay,
-                    $totalDiscount,
-                    $totalMinutesLate,
-                    $totalMinutesEarly
-                );
-            } else {
-                $payInfo = sprintf(
-                    'Base día: S/ %.2f. Sin tardanzas ni salidas anticipadas.',
-                    $totalBasePay
-                );
-            }
-        }
-
-        // Guardar fila del día
-        $rows[] = [
-            'date'       => $cursor->copy(),
-            'day_name'   => $cursor->locale('es')->isoFormat('dddd'),
-            'turnos'     => $turnos,
-            'pay_amount' => $payAmount,
-            'pay_info'   => $payInfo,
-        ];
-
-        $cursor->addDay();
-    }
-
+    // SMTP config for view (if admin needs to send)
+    $smtp = \App\Models\MailSetting::first();
+    $smtpEnabled = $smtp ? (bool) $smtp->enabled : false;
     return view('attendance.by_employee', [
         'employee' => $employee,
         'rows'     => $rows,
+        'smtpEnabled' => $smtpEnabled,
     ]);
 }
+
+    /**
+     * Construir filas de asistencia (reutilizable por reportes)
+     */
+    public static function buildRows(string $employeeNo): array
+    {
+        $employee = Employee::where('employee_no', $employeeNo)->firstOrFail();
+
+        $today     = Carbon::now('America/Lima')->startOfDay();
+        $baseStart = $today->copy()->subDays(30)->startOfDay();
+        $end       = $today->copy()->addDays(30)->endOfDay();
+
+        $schedules = WorkSchedule::where('employee_no', $employeeNo)
+            ->orderBy('start_date')
+            ->orderBy('created_at')
+            ->get();
+
+        if ($schedules->isEmpty()) {
+            return ['employee' => $employee, 'rows' => []];
+        }
+
+        $start = $baseStart->copy();
+
+        $events = AttendanceEvent::where('employee_no', $employeeNo)
+            ->whereBetween('event_time', [$start, $end])
+            ->orderBy('event_time')
+            ->get()
+            ->groupBy(function ($e) {
+                return Carbon::parse($e->event_time)->toDateString();
+            });
+
+        $rows = [];
+        $cursor = $start->copy();
+
+        $hourlyRate   = (float) ($employee->hourly_rate ?? 0);
+        $payPerMinute = $hourlyRate > 0 ? $hourlyRate / 60.0 : 0;
+
+        $controller = new self();
+
+        while ($cursor <= $end) {
+            $dateStr = $cursor->toDateString();
+            $dow     = $cursor->isoWeekday();
+
+            $activeSchedules = $schedules->filter(function ($sch) use ($cursor, $dow) {
+                $d = $cursor->toDateString();
+
+                $startDate = $sch->start_date ? $sch->start_date->toDateString() : null;
+                $endDate   = $sch->end_date   ? $sch->end_date->toDateString()   : null;
+
+                if ($startDate && $d < $startDate) return false;
+                if ($endDate   && $d > $endDate)   return false;
+
+                $workDays = is_array($sch->work_days) ? $sch->work_days : [];
+                if (!in_array($dow, $workDays)) return false;
+
+                return true;
+            });
+
+            if ($activeSchedules->isEmpty()) {
+                $cursor->addDay();
+                continue;
+            }
+
+            $dayEvents = $events[$dateStr] ?? collect();
+
+            $turnos = [];
+            foreach ($activeSchedules as $sch) {
+                $entryScheduled = $sch->entry_time;
+                $exitScheduled  = $sch->exit_time;
+
+                $entryMark = $exitMark = $obsEntrada = $obsSalida = $estadoEntrada = $estadoSalida = null;
+
+                if (!$cursor->isFuture()) {
+                    [
+                        $entryMark,
+                        $exitMark,
+                        $obsEntrada,
+                        $obsSalida,
+                        $estadoEntrada,
+                        $estadoSalida,
+                    ] = $controller->analyzeDay($cursor, $sch, $dayEvents);
+                }
+
+                $turnos[] = [
+                    'entry_scheduled' => $entryScheduled,
+                    'exit_scheduled'  => $exitScheduled,
+                    'entry_mark'      => $entryMark,
+                    'exit_mark'       => $exitMark,
+                    'obs_entrada'     => $obsEntrada,
+                    'obs_salida'      => $obsSalida,
+                    'estado_entrada'  => $estadoEntrada,
+                    'estado_salida'   => $estadoSalida,
+                ];
+            }
+
+            // compute payments same as original (kept for PDF summary)
+            $totalBasePay = $totalDailyPay = $totalDiscount = 0.0;
+            $totalMinutesLate = $totalMinutesEarly = 0;
+
+            if ($hourlyRate > 0) {
+                foreach ($turnos as $t) {
+                    if (
+                        !($t['entry_mark'] instanceof \Carbon\Carbon) ||
+                        !($t['exit_mark']  instanceof \Carbon\Carbon) ||
+                        $t['estado_entrada'] === '❌ Falta' ||
+                        $t['estado_salida']  === '❌ Falta'
+                    ) {
+                        continue;
+                    }
+
+                    $entryAt = Carbon::parse($cursor->toDateString() . ' ' . $t['entry_scheduled'], 'America/Lima');
+                    $exitAt  = Carbon::parse($cursor->toDateString() . ' ' . $t['exit_scheduled'], 'America/Lima');
+
+                    $durationMinutes = max(0, $entryAt->diffInMinutes($exitAt));
+                    if ($durationMinutes <= 0) continue;
+
+                    $baseTurnPay = ($durationMinutes / 60.0) * $hourlyRate;
+
+                    $minutesLate = 0; if ($t['entry_mark']->gt($entryAt)) {
+                        $entryAtNoSec = $entryAt->copy()->second(0);
+                        $entryMarkNoSec = $t['entry_mark']->copy()->second(0);
+                        $minutesLate = max(0, $entryAtNoSec->diffInMinutes($entryMarkNoSec, false));
+                    }
+
+                    $minutesEarly = 0; if ($t['exit_mark']->lt($exitAt)) {
+                        $exitMarkNoSec = $t['exit_mark']->copy()->second(0);
+                        $exitAtNoSec = $exitAt->copy()->second(0);
+                        $minutesEarly = max(0, $exitMarkNoSec->diffInMinutes($exitAtNoSec, false));
+                    }
+
+                    $discountTurn = ($minutesLate + $minutesEarly) * $payPerMinute;
+                    $payTurn = max(0, $baseTurnPay - $discountTurn);
+
+                    $totalBasePay += $baseTurnPay;
+                    $totalDailyPay += $payTurn;
+                    $totalMinutesLate += $minutesLate;
+                    $totalMinutesEarly += $minutesEarly;
+                    $totalDiscount += $discountTurn;
+                }
+            }
+
+            $payAmount = null; $payInfo = null;
+            if ($hourlyRate > 0 && $totalBasePay > 0) {
+                $totalBasePay = round($totalBasePay,2);
+                $totalDailyPay = round($totalDailyPay,2);
+                $totalDiscount = round($totalDiscount,2);
+                $payAmount = $totalDailyPay;
+                if ($totalMinutesLate>0 || $totalMinutesEarly>0) {
+                    $payInfo = sprintf('Base día: S/ %.2f. Se descontó S/ %.2f por %d min de tardanza y %d min de salida anticipada.', $totalBasePay, $totalDiscount, $totalMinutesLate, $totalMinutesEarly);
+                } else {
+                    $payInfo = sprintf('Base día: S/ %.2f. Sin tardanzas ni salidas anticipadas.', $totalBasePay);
+                }
+            }
+
+            $rows[] = [
+                'date' => $cursor->copy(),
+                'day_name' => $cursor->locale('es')->isoFormat('dddd'),
+                'turnos' => $turnos,
+                'pay_amount' => $payAmount,
+                'pay_info' => $payInfo,
+            ];
+
+            $cursor->addDay();
+        }
+
+        return ['employee' => $employee, 'rows' => $rows];
+    }
 
 
     /**

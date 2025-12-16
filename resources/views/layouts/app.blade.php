@@ -423,6 +423,11 @@
           <span class="nav-item-icon"><i class="fas fa-fingerprint"></i></span>
           <span class="nav-item-text">Autenticación</span>
         </a>
+        
+        <a href="{{ route('admin.mailsettings.edit') }}" class="nav-item {{ request()->is('admin/mail-settings*') ? 'active' : '' }}">
+          <span class="nav-item-icon"><i class="fas fa-envelope"></i></span>
+          <span class="nav-item-text">Mail Settings</span>
+        </a>
       </nav>
       
       @auth

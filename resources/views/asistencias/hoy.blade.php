@@ -265,6 +265,9 @@
     </a>
   </div>
   
+  {{-- Añadir botón rápido para enviar reporte de un empleado si estás en vista por empleado; aquí mostramos ejemplo general --}}
+  {{-- Integración real: agregar botón en la vista de detalle del empleado con formulario POST a route('employees.send_report', $employee) --}}
+  
   <!-- Resumen de estadísticas -->
   <div class="stats-summary">
     <div>
