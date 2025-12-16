@@ -258,6 +258,17 @@
       </div>
     </div>
 
+    <div class="form-section">
+      <div class="section-title"><i class="fas fa-exclamation-triangle"></i> Opciones</div>
+      <div class="form-group">
+        <label style="display:flex; gap:12px; align-items:center;">
+          <input type="checkbox" name="no_repetitive" id="no_repetitive" value="1">
+          <span>No repetitivo — solo generar para esta semana</span>
+        </label>
+        <small style="display:block; color:#6c7a89; margin-top:6px">Si marcas esto, el sistema creará ocurrencias puntuales para la semana actual según los días seleccionados. Por defecto el horario es repetitivo.</small>
+      </div>
+    </div>
+
     <div class="form-actions">
       <button type="submit" class="btn-submit">Actualizar Horario</button>
     </div>

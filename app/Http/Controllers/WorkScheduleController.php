@@ -70,19 +70,43 @@ class WorkScheduleController extends Controller
     $exitMinus  = $request->exit_minus ?? ($template?->exit_early_min ?? 10);
     $exitPlus   = $request->exit_plus ?? ($template?->exit_late_min ?? 10);
 
-    WorkSchedule::create([
-        'employee_no'          => $request->employee_no,
-        'schedule_template_id' => $template?->id,
-        'entry_time'           => $entryTime,
-        'exit_time'            => $exitTime,
-        'entry_minus'          => $entryMinus,
-        'entry_plus'           => $entryPlus,
-        'exit_minus'           => $exitMinus,
-        'exit_plus'            => $exitPlus,
-        'work_days'            => $workDays,
-        'start_date'           => Carbon::today(), // Iniciar desde HOY
-        'end_date'             => null,             // Sin fecha de fin por defecto
-    ]);
+    // Si se marca 'no_repetitive', crear ocurrencias puntuales para la semana actual
+    $noRepetitive = $request->has('no_repetitive') && $request->input('no_repetitive');
+
+    if ($noRepetitive) {
+        $days = is_array($workDays) ? $workDays : ([] === $workDays ? [] : (array)$workDays);
+        $weekStart = Carbon::now('America/Lima')->startOfWeek(); // lunes
+        foreach ($days as $wd) {
+            $d = $weekStart->copy()->addDays(((int)$wd) - 1)->toDateString();
+            WorkSchedule::create([
+                'employee_no'          => $request->employee_no,
+                'schedule_template_id' => $template?->id,
+                'entry_time'           => $entryTime,
+                'exit_time'            => $exitTime,
+                'entry_minus'          => $entryMinus,
+                'entry_plus'           => $entryPlus,
+                'exit_minus'           => $exitMinus,
+                'exit_plus'            => $exitPlus,
+                'work_days'            => [$wd],
+                'start_date'           => $d,
+                'end_date'             => $d,
+            ]);
+        }
+    } else {
+        WorkSchedule::create([
+            'employee_no'          => $request->employee_no,
+            'schedule_template_id' => $template?->id,
+            'entry_time'           => $entryTime,
+            'exit_time'            => $exitTime,
+            'entry_minus'          => $entryMinus,
+            'entry_plus'           => $entryPlus,
+            'exit_minus'           => $exitMinus,
+            'exit_plus'            => $exitPlus,
+            'work_days'            => $workDays,
+            'start_date'           => Carbon::today(), // Iniciar desde HOY
+            'end_date'             => null,             // Sin fecha de fin por defecto
+        ]);
+    }
 
     return redirect()
         ->route('horarios.create')
@@ -157,20 +181,44 @@ class WorkScheduleController extends Controller
         ]);
     }
 
-    // 2) Crear nuevo horario desde HOY hacia adelante
-    WorkSchedule::create([
-        'employee_no'          => $request->employee_no,
-        'schedule_template_id' => $template?->id,
-        'entry_time'           => $entryTime,
-        'exit_time'            => $exitTime,
-        'entry_minus'          => $entryMinus,
-        'entry_plus'           => $entryPlus,
-        'exit_minus'           => $exitMinus,
-        'exit_plus'            => $exitPlus,
-        'work_days'            => $workDays,
-        'start_date'           => $today,
-        'end_date'             => null,
-    ]);
+    // 2) Si 'no_repetitive' está marcado -> crear ocurrencias puntuales para la semana actual
+    $noRepetitive = $request->has('no_repetitive') && $request->input('no_repetitive');
+
+    if ($noRepetitive) {
+        $days = is_array($workDays) ? $workDays : ([] === $workDays ? [] : (array)$workDays);
+        $weekStart = Carbon::now('America/Lima')->startOfWeek();
+        foreach ($days as $wd) {
+            $d = $weekStart->copy()->addDays(((int)$wd) - 1)->toDateString();
+            WorkSchedule::create([
+                'employee_no'          => $request->employee_no,
+                'schedule_template_id' => $template?->id,
+                'entry_time'           => $entryTime,
+                'exit_time'            => $exitTime,
+                'entry_minus'          => $entryMinus,
+                'entry_plus'           => $entryPlus,
+                'exit_minus'           => $exitMinus,
+                'exit_plus'            => $exitPlus,
+                'work_days'            => [$wd],
+                'start_date'           => $d,
+                'end_date'             => $d,
+            ]);
+        }
+    } else {
+        // 2) Crear nuevo horario desde HOY hacia adelante (repetitivo)
+        WorkSchedule::create([
+            'employee_no'          => $request->employee_no,
+            'schedule_template_id' => $template?->id,
+            'entry_time'           => $entryTime,
+            'exit_time'            => $exitTime,
+            'entry_minus'          => $entryMinus,
+            'entry_plus'           => $entryPlus,
+            'exit_minus'           => $exitMinus,
+            'exit_plus'            => $exitPlus,
+            'work_days'            => $workDays,
+            'start_date'           => $today,
+            'end_date'             => null,
+        ]);
+    }
 
     return redirect()
         ->route('horarios.updateForm')
