@@ -3,13 +3,13 @@
 @section('content')
 <style>
   .employees-page {
-    padding: 30px;
+    padding: 8px; /* tightened gutters to match framed mobile look */
   }
   
   /* Header del panel */
   .page-header {
     background: white;
-    padding: 25px 30px;
+    padding: 16px 12px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     margin-bottom: 25px;
@@ -486,54 +486,61 @@
   /* Barra flotante de acciones múltiples */
   .bulk-actions-bar {
     position: fixed;
-    bottom: -100px;
+    bottom: 0;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) translateY(200%);
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    padding: 20px 30px;
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+    padding: 12px 16px;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -6px 18px rgba(0,0,0,0.18);
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
     z-index: 1000;
-    transition: bottom 0.3s ease;
-    min-width: 400px;
+    transition: transform 0.28s cubic-bezier(.22,.9,.33,1);
+    box-sizing: border-box;
+    max-width: 100%;
+    transform-origin: bottom center;
   }
 
   .bulk-actions-bar.visible {
-    bottom: 0;
+    transform: translateX(-50%) translateY(0);
   }
 
+  /* reservar menos espacio para la barra en pantallas pequeñas */
+  body.has-bulk-bar { padding-bottom: 96px; }
+
   .bulk-info {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .bulk-count {
-    font-size: 20px;
+    font-size: 16px;
     font-weight: 700;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
 
   .bulk-subtitle {
-    font-size: 13px;
-    opacity: 0.9;
+    font-size: 12px;
+    opacity: 0.95;
   }
 
   .bulk-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    align-items: center;
   }
 
   .btn-bulk {
-    padding: 10px 20px;
+    padding: 8px 12px;
     border: none;
     border-radius: 8px;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.18s ease;
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -546,17 +553,35 @@
 
   .btn-bulk-delete:hover {
     background: #c82333;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
 
   .btn-bulk-cancel {
-    background: rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.14);
     color: white;
-    border: 2px solid white;
+    border: 1px solid rgba(255,255,255,0.22);
   }
 
   .btn-bulk-cancel:hover {
-    background: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.18);
+  }
+
+  @media (max-width: 768px) {
+    .bulk-actions-bar {
+      left: 0;
+      width: 100%;
+      border-radius: 12px 12px 0 0;
+      min-width: unset;
+      padding: 12px 12px;
+      transform: translateY(200%);
+    }
+
+    .bulk-actions-bar.visible { transform: translateY(0); }
+
+    /* apilar botones en móvil para que quepan y sean legibles */
+    .bulk-actions { flex-direction: column; gap: 10px; width: 100%; }
+    .bulk-actions .btn-bulk { width: 100%; justify-content: center; }
+    .bulk-info { margin-bottom: 8px; }
   }
 
   /* Checkbox personalizado */
@@ -629,6 +654,29 @@
   .btn-select-mode.active {
     background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
   }
+  /* Table is primary view; responsive adjustments below. */
+  @media (max-width: 768px) {
+    /* reduce table paddings and font-size on small screens */
+    tbody td { padding: 10px 12px; font-size: 13px; }
+    thead th { padding: 10px 12px; font-size: 12px; }
+    .badge { padding: 3px 8px; font-size: 11px; }
+  }
+
+  /* Header actions responsive */
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+
+  @media (max-width: 768px) {
+    .page-header { flex-direction: column; align-items: stretch; padding: 16px; gap: 12px; }
+    .header-actions { width: 100%; justify-content: space-between; }
+    .header-actions .btn-select-mode,
+    .header-actions .btn-new { min-width: 0; box-sizing: border-box; }
+  }
+
+  @media (max-width: 480px) {
+    .header-actions { flex-direction: column; gap: 8px; }
+    .header-actions .btn-select-mode,
+    .header-actions .btn-new { width: 100%; display: inline-flex; justify-content: center; }
+  }
 </style>
 
 <div class="employees-page">
@@ -640,7 +688,7 @@
       <p class="page-subtitle">Administra la información de tu equipo de trabajo</p>
     </div>
     
-    <div style="display: flex; gap: 10px;">
+    <div class="header-actions">
       <button type="button" class="btn-select-mode" id="btnToggleSelectMode">
         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
           <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
@@ -759,7 +807,8 @@
     <form id="bulkDeleteForm" method="post" action="{{ route('employees.bulkDestroy') }}">
       @csrf
       
-      <table id="employeesTable">
+      <div class="table-responsive">
+        <table id="employeesTable">
       <thead>
         <tr>
           <th class="employee-checkbox-cell">
@@ -820,9 +869,12 @@
           </td>
         </tr>
       @endforelse
-      </tbody>
-  </table>
+        </tbody>
+      </table>
+      </div>
   </form>
+
+  <!-- mobile fallback removed - single responsive table used across devices -->
   
   {{-- Formularios individuales de eliminación (fuera del formulario bulk) --}}
   @foreach($employees as $e)
@@ -957,6 +1009,7 @@
       
       if (selectionMode) {
         employeesTable.classList.add('selection-mode');
+        document.body.classList.add('selection-mode');
         btnToggleSelectMode.classList.add('active');
         btnToggleSelectMode.innerHTML = `
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -966,6 +1019,7 @@
         `;
       } else {
         employeesTable.classList.remove('selection-mode');
+        document.body.classList.remove('selection-mode');
         btnToggleSelectMode.classList.remove('active');
         btnToggleSelectMode.innerHTML = `
           <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -995,34 +1049,39 @@
       
       if (count > 0 && selectionMode) {
         bulkActionsBar.classList.add('visible');
+        document.body.classList.add('has-bulk-bar');
       } else {
         bulkActionsBar.classList.remove('visible');
+        document.body.classList.remove('has-bulk-bar');
       }
     }
 
     // Click en filas cuando está en modo selección
-    tableRows.forEach(row => {
-      row.addEventListener('click', function(e) {
+    function attachSelectable(element) {
+      element.addEventListener('click', function(e) {
         if (!selectionMode) return;
-        
+
         // No hacer nada si se hace click en un botón o enlace
         if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' || e.target.closest('a') || e.target.closest('button')) {
           return;
         }
-        
+
         const checkbox = this.querySelector('.employee-checkbox');
+        if (!checkbox) return;
         checkbox.checked = !checkbox.checked;
-        
+
         if (checkbox.checked) {
           this.classList.add('selected');
         } else {
           this.classList.remove('selected');
         }
-        
+
         updateBulkActions();
         updateSelectAllState();
       });
-    });
+    }
+
+    tableRows.forEach(row => attachSelectable(row));
 
     // Actualizar estado del checkbox "seleccionar todos"
     function updateSelectAllState() {
@@ -1033,33 +1092,41 @@
       selectAllCheckbox.indeterminate = someChecked && !allChecked;
     }
 
-    // Seleccionar/deseleccionar todos
+    // Seleccionar/deseleccionar todos (trabaja con checkboxes en tabla y en tarjetas)
     selectAllCheckbox.addEventListener('change', function() {
-      employeeCheckboxes.forEach((checkbox, index) => {
+      const allCheckboxes = document.querySelectorAll('.employee-checkbox');
+      allCheckboxes.forEach((checkbox) => {
         checkbox.checked = this.checked;
-        const row = tableRows[index];
-        if (this.checked) {
-          row.classList.add('selected');
-        } else {
-          row.classList.remove('selected');
+        // añadir/quitar clase selected en el contenedor correspondiente
+        const tr = checkbox.closest('tr');
+        const card = checkbox.closest('.employee-card');
+        if (tr) {
+          if (this.checked) tr.classList.add('selected'); else tr.classList.remove('selected');
+        }
+        if (card) {
+          if (this.checked) card.classList.add('selected'); else card.classList.remove('selected');
         }
       });
       updateBulkActions();
     });
 
-    // Actualizar cuando se cambia checkbox directamente
-    employeeCheckboxes.forEach((checkbox, index) => {
+    // Actualizar cuando se cambia checkbox directamente (tanto en tabla como en tarjetas)
+    function attachCheckboxListener(checkbox) {
       checkbox.addEventListener('change', function() {
-        const row = tableRows[index];
-        if (this.checked) {
-          row.classList.add('selected');
-        } else {
-          row.classList.remove('selected');
+        const tr = checkbox.closest('tr');
+        const card = checkbox.closest('.employee-card');
+        if (tr) {
+          if (checkbox.checked) tr.classList.add('selected'); else tr.classList.remove('selected');
+        }
+        if (card) {
+          if (checkbox.checked) card.classList.add('selected'); else card.classList.remove('selected');
         }
         updateBulkActions();
         updateSelectAllState();
       });
-    });
+    }
+
+    document.querySelectorAll('.employee-checkbox').forEach(cb => attachCheckboxListener(cb));
 
     // Botón de eliminar
     btnBulkDelete.addEventListener('click', function() {

@@ -75,6 +75,27 @@
     background-color: #f8f9fa;
   }
 
+  /* Limit native select visible width on larger screens; full-width on phones */
+  .form-group select { max-width: 420px; }
+
+  @media (max-width: 640px) {
+    .form-group select { max-width: 100%; font-size: 15px; padding: 0.9rem 1rem; }
+  }
+  
+  /* Custom select replacement to avoid oversized native dropdowns */
+  .custom-select-wrapper { position: relative; max-width: 420px; }
+  .custom-select { display:flex; align-items:center; gap:10px; justify-content:space-between; border:2px solid #e0e6ed; background:#f8f9fa; padding:0.65rem 1rem; border-radius:8px; cursor:pointer; }
+  .custom-select-display { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#2c3e50 }
+  .custom-select-caret { margin-left:8px; color:#667eea }
+  .custom-select-list { position:absolute; left:0; right:0; top:calc(100% + 8px); background:white; border:1px solid #e6edf3; border-radius:8px; box-shadow:0 6px 18px rgba(18,38,63,0.06); max-height:220px; overflow:auto; z-index:2000; display:none }
+  .custom-select-list.open { display:block }
+  .custom-select-item { padding:10px 12px; cursor:pointer; white-space:normal; color:#34495e }
+  .custom-select-item:hover { background:#f0f3ff }
+  @media (max-width:640px) {
+    .custom-select-wrapper { max-width: 100%; }
+    .custom-select-list { max-height:260px }
+  }
+
   .form-group input:focus,
   .form-group select:focus {
     outline: none;
@@ -217,7 +238,7 @@
       <div class="form-group">
         <label for="template_id">Plantilla de Horario (opcional)</label>
         <select id="template_id" name="template_id">
-          <option value="">-- Sin plantilla / personalizado --</option>
+          <option value="">Sin plantilla / personalizado</option>
           @foreach($templates as $tpl)
             <option value="{{ $tpl->id }}"
                 {{ old('template_id') == $tpl->id ? 'selected' : '' }}>
@@ -351,5 +372,43 @@ document.getElementById('template_id')?.addEventListener('change', function() {
     }
   }
 });
+
+// Init custom select to avoid oversized native dropdown
+(function(){
+  function initCustomSelect(id){
+    const sel = document.getElementById(id);
+    if(!sel) return;
+    // build wrapper
+    const wrapper = document.createElement('div'); wrapper.className='custom-select-wrapper';
+    sel.parentNode.insertBefore(wrapper, sel);
+    wrapper.appendChild(sel);
+    sel.style.display = 'none';
+
+    const custom = document.createElement('div'); custom.className='custom-select';
+    const disp = document.createElement('div'); disp.className='custom-select-display';
+    disp.textContent = sel.options[sel.selectedIndex]?.text || sel.options[0]?.text || '';
+    const caret = document.createElement('div'); caret.className='custom-select-caret'; caret.innerHTML = '<i class="fas fa-caret-down"></i>';
+    custom.appendChild(disp); custom.appendChild(caret);
+    wrapper.appendChild(custom);
+
+    const list = document.createElement('div'); list.className='custom-select-list';
+    Array.from(sel.options).forEach(opt => {
+      const item = document.createElement('div'); item.className='custom-select-item'; item.dataset.value = opt.value; item.textContent = opt.text;
+      item.addEventListener('click', function(){
+        sel.value = this.dataset.value;
+        sel.dispatchEvent(new Event('change',{bubbles:true}));
+        disp.textContent = this.textContent;
+        list.classList.remove('open');
+      });
+      list.appendChild(item);
+    });
+    wrapper.appendChild(list);
+
+    custom.addEventListener('click', function(e){ list.classList.toggle('open'); });
+    document.addEventListener('click', function(e){ if(!wrapper.contains(e.target)) list.classList.remove('open'); });
+  }
+
+  initCustomSelect('template_id');
+})();
 </script>
 @endsection

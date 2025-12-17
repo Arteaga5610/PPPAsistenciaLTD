@@ -18,8 +18,8 @@
 
         <div class="mb-3">
             <label>Employee No</label><br>
-            <input type="text" name="employee_no"
-                   value="{{ old('employee_no') }}" style="min-width:250px">
+                 <input type="text" name="employee_no"
+                     value="{{ old('employee_no') }}">
         </div>
 
         <hr>

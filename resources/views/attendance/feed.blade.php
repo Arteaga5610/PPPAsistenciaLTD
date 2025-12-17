@@ -15,7 +15,8 @@
     use App\Support\AttendanceLabels;
 @endphp
 
-<table>
+<div class="table-responsive">
+  <table>
   <thead>
     <tr>
       <th>Empleado</th>
@@ -32,5 +33,6 @@
     </tr>
   @endforeach
   </tbody>
-</table>
+  </table>
+</div>
 @endsection

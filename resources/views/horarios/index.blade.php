@@ -3,30 +3,30 @@
 @section('content')
 <style>
   .schedules-page {
-    padding: 30px;
+    padding: 8px; /* tighter gutters to match global framed look */
   }
-  
+
   .page-header {
     background: white;
-    padding: 25px 30px;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    margin-bottom: 25px;
+    padding: 12px 14px; /* reduce inner padding so content sits closer to sidebar */
+    border-radius: 8px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+    margin-bottom: 14px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: 12px;
   }
   
   .page-title-section h1 {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 700;
     color: #2c3e50;
     margin: 0 0 5px 0;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
   }
   
   .page-subtitle {
@@ -65,7 +65,7 @@
   }
   
   .table-header {
-    padding: 20px 25px;
+    padding: 12px 14px;
     border-bottom: 1px solid #e9ecef;
   }
   
@@ -88,7 +88,7 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: #495057;
-    padding: 14px 20px;
+    padding: 10px 12px;
     text-align: left;
     border-bottom: 2px solid #e9ecef;
   }
@@ -103,7 +103,7 @@
   }
   
   tbody td {
-    padding: 16px 20px;
+    padding: 10px 12px;
     font-size: 14px;
     color: #2c3e50;
   }
@@ -336,6 +336,18 @@
       justify-content: center;
     }
   }
+
+  /* Additional responsive tweaks: make page narrower gaps on small screens */
+  @media (max-width: 640px) {
+    .schedules-page { padding: 6px; }
+    .page-header { padding: 10px 12px; }
+    .page-title-section h1 { font-size: 18px; }
+    .page-subtitle { font-size: 13px; }
+    .btn-new { padding: 10px 14px; }
+    .table-header { padding: 10px 12px; }
+    thead th { font-size: 11px; padding: 8px 10px; }
+    tbody td { padding: 8px 10px; font-size: 13px; }
+  }
 </style>
 
 <div class="schedules-page">
@@ -366,7 +378,8 @@
       <h2>Lista de Horarios Asignados</h2>
     </div>
     
-    <table>
+    <div class="table-responsive">
+      <table>
       <thead>
         <tr>
           <th>Empleado</th>
@@ -452,7 +465,8 @@
         </tr>
       @endforelse
       </tbody>
-    </table>
+      </table>
+    </div>
     
     @if($schedules->hasPages())
       <div class="pagination-section">

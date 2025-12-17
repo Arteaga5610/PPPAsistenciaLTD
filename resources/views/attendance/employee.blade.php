@@ -9,7 +9,8 @@
   <button class="btn btn-primary">Filtrar</button>
 </form>
 
-<table class="table table-bordered">
+<div class="table-responsive">
+  <table class="table table-bordered">
   <thead>
     <tr>
       <th>Fecha</th>
@@ -30,5 +31,6 @@
     </tr>
   @endforeach
   </tbody>
-</table>
+  </table>
+</div>
 @endsection

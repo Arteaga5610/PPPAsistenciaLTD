@@ -71,6 +71,11 @@
     margin-bottom: 1rem;
   }
 
+  @media (max-width: 480px) {
+    .form-row { grid-template-columns: 1fr; }
+    .auth-card { padding: 1rem; }
+  }
+
   .form-group {
     margin-bottom: 1rem;
   }

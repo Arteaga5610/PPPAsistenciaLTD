@@ -3,14 +3,21 @@
 @section('content')
 <style>
   .turnos-page {
-    padding: 30px;
+    padding: 8px; /* tighter gutters to match framed look */
   }
   
   .page-header {
+    margin-bottom: 18px;
+    padding: 6px 6px 0 6px;
+  }
+
+  .header-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 30px;
+    gap: 12px;
+    width: 100%;
+    flex-wrap: wrap;
   }
   
   .page-title {
@@ -52,6 +59,8 @@
     align-items: center;
     gap: 8px;
   }
+
+  .header-actions { display:flex; align-items:center; }
   
   .back-button:hover {
     border-color: #667eea;
@@ -247,22 +256,35 @@
     margin: 0;
     font-size: 16px;
   }
+
+  /* Stack header content on small screens so Volver is consistent */
+  @media (max-width: 640px) {
+    .header-row { flex-direction: column; align-items: flex-start; }
+    .page-title { gap: 12px; }
+    .back-button { padding: 10px 14px; font-size: 14px; border-radius: 8px; }
+    .header-actions { width: 100%; display: flex; justify-content: flex-start; }
+  }
 </style>
 
 <div class="turnos-page">
   
   <!-- Cabecera de la página -->
   <div class="page-header">
-    <div class="page-title">
-      <div class="icon">
-        <i class="fas fa-calendar-check"></i>
+    <div class="header-row">
+      <div class="page-title">
+        <div class="icon">
+          <i class="fas fa-calendar-check"></i>
+        </div>
+        <h1>Asistencias de Hoy</h1>
       </div>
-      <h1>Asistencias de Hoy</h1>
+
+      <div class="header-actions">
+        <a href="{{ route('dashboard') }}" class="back-button">
+          <i class="fas fa-arrow-left"></i>
+          Volver
+        </a>
+      </div>
     </div>
-    <a href="{{ route('dashboard') }}" class="back-button">
-      <i class="fas fa-arrow-left"></i>
-      Volver
-    </a>
   </div>
   
   {{-- Añadir botón rápido para enviar reporte de un empleado si estás en vista por empleado; aquí mostramos ejemplo general --}}
@@ -283,7 +305,8 @@
   <!-- Tabla de turnos -->
   <div class="table-card">
     <div class="table-container">
-      <table>
+      <div class="table-responsive">
+        <table>
         <thead>
           <tr>
             <th>Empleado</th>
@@ -374,7 +397,8 @@
             </tr>
           @endforelse
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   </div>
 

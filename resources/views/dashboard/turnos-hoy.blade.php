@@ -280,7 +280,8 @@
   <!-- Tabla de turnos -->
   <div class="table-card">
     <div class="table-container">
-      <table>
+      <div class="table-responsive">
+        <table>
         <thead>
           <tr>
             <th>Empleado</th>
@@ -371,7 +372,8 @@
             </tr>
           @endforelse
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   </div>
 

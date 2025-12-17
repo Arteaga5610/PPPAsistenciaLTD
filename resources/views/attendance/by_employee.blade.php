@@ -57,7 +57,8 @@
         background: white;
         border-radius: 16px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.07);
-        overflow: hidden;
+        /* allow internal components (tables) to provide horizontal scroll when needed */
+        overflow: visible;
         margin-bottom: 2rem;
     }
 
@@ -302,7 +303,9 @@
         }
 
         .attendance-table {
-            min-width: 900px;
+            /* Allow table to shrink on small screens; horizontal scroll is provided
+               by the surrounding .table-responsive container. */
+            min-width: 0;
         }
     }
 </style>
@@ -341,8 +344,14 @@
         </div>
     </div>
 
+    <!-- Back button inside the content panel so it doesn't float outside on small screens -->
+    <div style="margin-bottom:12px;">
+        <a href="{{ route('employees.index') }}" class="back-link">← Volver</a>
+    </div>
+
     <div class="attendance-table-container">
-        <table class="attendance-table">
+            <div class="table-responsive">
+                <table class="attendance-table">
             <thead>
                 <tr>
                     <th>Fecha</th>
@@ -503,12 +512,10 @@
             @endforelse
             </tbody>
         </table>
+            </div>
     </div>
 
-    <a href="{{ route('employees.index') }}" class="back-link">
-        <span>←</span>
-        Volver
-    </a>
+    <!-- removed: back-link moved earlier to keep layout inside content -->
 </div>
 
 {{-- Script para abrir/cerrar el desplegable --}}

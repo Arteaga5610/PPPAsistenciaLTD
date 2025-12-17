@@ -3,14 +3,14 @@
 @section('content')
 <style>
   .create-employee-page {
-    padding: 30px;
-    max-width: 900px;
+    padding: 8px; /* tighter gutters */
+    max-width: 100%;
     margin: 0 auto;
   }
   
   .page-header-create {
     background: white;
-    padding: 25px 30px;
+    padding: 16px 12px;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     margin-bottom: 25px;

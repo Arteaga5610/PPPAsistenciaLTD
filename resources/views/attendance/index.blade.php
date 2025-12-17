@@ -3,7 +3,8 @@
 @section('content')
   <h2>Asistencia del {{ $date }}</h2>
 
-<table border="1" cellpadding="6">
+<div class="table-responsive">
+  <table border="1" cellpadding="6">
   <thead>
     <tr>
       <th>Empleado</th>
@@ -36,6 +37,8 @@
       <tr><td colspan="6">Sin registros</td></tr>
     @endforelse
   </tbody>
+
 </table>
+</div>
 
 @endsection

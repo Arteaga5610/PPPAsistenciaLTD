@@ -4,7 +4,8 @@
 <h2>Todos los Registros de Asistencia</h2>
 
 @if($records->count() > 0)
-<table border="1" cellpadding="6" cellspacing="0" style="width: 100%;">
+<div class="table-responsive">
+    <table border="1" cellpadding="6" cellspacing="0" style="width: 100%;">
     <thead>
         <tr>
             <th>Empleado (ID)</th>
@@ -35,7 +36,8 @@
         </tr>
     @endforeach
     </tbody>
-</table>
+    </table>
+</div>
 
 <br>
 {{ $records->links() }}
