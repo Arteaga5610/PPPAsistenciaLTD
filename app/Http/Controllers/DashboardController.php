@@ -147,7 +147,7 @@ class DashboardController extends Controller
         $todaySchedules = $this->getTodaySchedulesWithStatus();
         $scheduleCount = $this->getTodayScheduleCount();
         
-        return view('asistencias.hoy', compact('todaySchedules', 'scheduleCount'));
+        return view('dashboard.turnos-hoy', compact('todaySchedules', 'scheduleCount'));
     }
     
     /**

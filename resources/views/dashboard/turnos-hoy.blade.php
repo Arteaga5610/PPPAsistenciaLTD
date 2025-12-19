@@ -266,9 +266,21 @@
   </div>
   
   <!-- Resumen de estadísticas -->
+@php
+  // ✅ TOTAL TURNOS DEL DÍA
+$totalTurns = count($todaySchedules);
+
+  // ✅ TURNOS COMPLETADOS = entrada y salida dicen "Asistió"
+  $withMarks = collect($todaySchedules)->filter(function ($item) {
+    $entry = trim(strip_tags((string) ($item['entry_status'] ?? '')));
+    $exit  = trim(strip_tags((string) ($item['exit_status'] ?? '')));
+
+    return $entry !== '' && $exit !== '';
+  })->count();
+@endphp
   <div class="stats-summary">
     <div>
-      <div class="main-stat">{{ $scheduleCount['with_marks'] }}/{{ $scheduleCount['total'] }}</div>
+<div class="main-stat">{{ $withMarks }}/{{ $totalTurns }}</div>
       <div class="stat-label">Empleados han marcado su horario el día de hoy</div>
     </div>
     <div class="date-info">

@@ -293,7 +293,10 @@
   <!-- Resumen de estadísticas -->
   <div class="stats-summary">
     <div>
-      <div class="main-stat">{{ $scheduleCount['with_marks'] }}/{{ $scheduleCount['total'] }}</div>
+      <div class="main-stat"><div class="main-stat">
+    {{ $scheduleCount['with_marks'] ?? 0 }}/{{ $scheduleCount['total'] ?? 0 }}
+</div>
+</div>
       <div class="stat-label">Empleados han marcado su horario el día de hoy</div>
     </div>
     <div class="date-info">
