@@ -22,7 +22,7 @@
   .btn-primary { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; border:none; padding:10px 14px; border-radius:8px }
   .btn-outline { background:white; border:1px solid #d6dbe2; padding:10px 14px; border-radius:8px }
 
-  /* Mobile adjustments: make form full-width, inputs larger, stack actions */
+  /* Mobile adjustments */
   @media (max-width: 640px) {
     .mail-settings-page { margin: 8px; padding: 0; }
     .mail-card { border-radius: 10px; }
@@ -34,10 +34,8 @@
     .small-note { font-size:13px }
     .actions { flex-direction: column; align-items: stretch; gap:10px; padding:12px 14px }
     .btn-primary, .btn-outline { width: 100%; padding:12px; }
-    /* Make checkbox line align better on small screens */
     .mail-grid > div[style] { display: flex; align-items: center; gap: 10px; }
   }
-
 </style>
 
 <div class="mail-settings-page">
@@ -51,8 +49,9 @@
       <div style="color:#7a8ca3">Configura la cuenta que enviará los reportes en PDF</div>
     </div>
 
-    <form method="post" action="{{ route('admin.mailsettings.update') }}">
+    <form method="post" action="{{ route('admin.mailsettings.update') }}" id="mailForm">
       @csrf
+
       <div class="card-body">
         <div class="mail-grid">
           <div>
@@ -74,7 +73,8 @@
 
           <div>
             <label class="form-label">App Password</label>
-            <input name="password" class="form-input" value="" autocomplete="new-password" {{ $saved ? 'disabled' : '' }}>
+            {{-- IMPORTANTE: lo dejamos SIN value y controlamos por JS para NO enviar vacío --}}
+            <input id="smtpPassword" name="password" class="form-input" value="" autocomplete="new-password" {{ $saved ? 'disabled' : '' }}>
             <div class="small-note">Usa App Password si tu cuenta requiere 2FA. Déjalo vacío para mantener la actual.</div>
           </div>
 
@@ -96,7 +96,18 @@
 
           <div style="display:flex;align-items:center;gap:10px">
             <label class="form-label" style="margin-bottom:0">Habilitado</label>
-            <input type="checkbox" name="enabled" value="1" {{ (old('enabled', $settings->enabled ?? false) ? 'checked' : '') }} {{ $saved ? 'disabled' : '' }}>
+
+            {{-- Para que SIEMPRE se envíe algo (0 o 1) al guardar cambios --}}
+            <input type="hidden" name="enabled" value="0">
+
+            <input
+              type="checkbox"
+              id="smtpEnabled"
+              name="enabled"
+              value="1"
+              {{ (old('enabled', $settings->enabled ?? false) ? 'checked' : '') }}
+              {{ $saved ? 'disabled' : '' }}
+            >
           </div>
         </div>
       </div>
@@ -115,25 +126,57 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function(){
-    const saved = {{ $saved ? 'true' : 'false' }};
-    if (!saved) return;
+document.addEventListener('DOMContentLoaded', function () {
+  const root = document.getElementById('mail-settings-root');
+  const saved = root && root.dataset ? root.dataset.saved === '1' : true; 
+  // si no hay root, asumimos true para que igual permita editar
 
-    const btnEdit = document.getElementById('btn-edit');
-    const btnSave = document.getElementById('btn-save');
-    const btnCancel = document.getElementById('btn-cancel');
-    const form = document.querySelector('form');
-    const inputs = Array.from(form.querySelectorAll('input'));
+  const btnEdit   = document.getElementById('btn-edit');
+  const btnSave   = document.getElementById('btn-save');
+  const btnCancel = document.getElementById('btn-cancel');
+  const form      = document.getElementById('mailForm');
+  const pass      = document.getElementById('smtpPassword');
 
-    btnEdit.addEventListener('click', () => {
-      inputs.forEach(i => i.removeAttribute('disabled'));
-      btnEdit.style.display = 'none';
-      btnSave.style.display = '';
-      btnCancel.style.display = '';
-    });
+  if (!saved) return;                 // solo aplica cuando ya está guardado
+  if (!btnEdit || !form) return;      // si no existe el botón o el form, no hay nada que hacer
 
-    btnCancel.addEventListener('click', () => { window.location.reload(); });
+  const fields = Array.from(form.querySelectorAll('input, select, textarea'));
+  let editMode = false;
+
+  // Evita submits accidentales (Enter, etc.) si no está en edición
+  form.addEventListener('submit', function (e) {
+    if (!editMode) {
+      e.preventDefault();
+      return;
+    }
+    if (pass && pass.value.trim() === '') {
+      pass.removeAttribute('name'); // no se envía password vacío
+    }
   });
+
+  btnEdit.addEventListener('click', function (e) {
+    e.preventDefault(); // por si acaso
+    editMode = true;
+
+    fields.forEach(el => el.disabled = false);
+
+    if (btnSave) btnSave.style.display = '';
+    if (btnCancel) btnCancel.style.display = '';
+    btnEdit.style.display = 'none';
+
+    // por si antes se removió name
+    if (pass && !pass.getAttribute('name')) pass.setAttribute('name', 'password');
+  });
+
+  if (btnCancel) {
+    btnCancel.addEventListener('click', function (e) {
+      e.preventDefault();
+      window.location.reload();
+    });
+  }
+});
 </script>
+
+
 
 @endsection

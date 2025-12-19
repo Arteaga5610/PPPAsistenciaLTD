@@ -124,7 +124,8 @@ class DashboardController extends Controller
         
         // Calcular recuento de marcaciones de hoy
         $scheduleCount = $this->getTodayScheduleCount();
-        
+        $markingCount = $this->getTodayMarkingCount(); // NUEVO
+
         return view('dashboard.index', compact(
             'totalEmployees',
             'employeesWithFp',
@@ -133,8 +134,8 @@ class DashboardController extends Controller
             'lateArrivals',
             'earlyExits',
             'punctualEmployees',
-            'topPunctual',
-            'scheduleCount'
+            'scheduleCount',
+            'markingCount' // NUEVO
         ));
     }
     
@@ -153,77 +154,136 @@ class DashboardController extends Controller
      * Calcula cuántos empleados han marcado COMPLETAMENTE su horario hoy (entrada Y salida)
      */
     private function getTodayScheduleCount()
-    {
-        $today = Carbon::today('America/Lima');
-        $dayOfWeek = $today->dayOfWeekIso;
-        $employees = Employee::all();
-        
-        $totalScheduledEmployees = 0;
-        $employeesWithCompleteMarks = 0;
-        
-        foreach ($employees as $employee) {
-            // Obtener horarios activos para hoy
-            $schedules = WorkSchedule::where('employee_no', $employee->employee_no)
-                ->whereDate('start_date', '<=', $today)
-                ->where(function ($query) use ($today) {
-                    $query->whereNull('end_date')
-                          ->orWhereDate('end_date', '>=', $today);
-                })
-                ->get();
-            
-            // Filtrar por día de la semana
-            $activeSchedules = $schedules->filter(function ($sch) use ($dayOfWeek) {
-                $workDays = is_array($sch->work_days) ? $sch->work_days : [];
-                return in_array($dayOfWeek, $workDays);
-            });
-            
-            if ($activeSchedules->isEmpty()) {
-                continue;
-            }
-            
-            // Este empleado tiene horario para hoy
-            $totalScheduledEmployees++;
-            
-            // Obtener eventos del empleado para hoy
-            $events = AttendanceEvent::where('employee_no', $employee->employee_no)
-                ->whereDate('event_time', $today)
-                ->orderBy('event_time')
-                ->get();
-            
-            if ($events->isEmpty()) {
-                continue;
-            }
-            
-            // Verificar si tiene al menos un turno completo (entrada Y salida)
-            $hasCompleteTurn = false;
-            foreach ($activeSchedules as $schedule) {
-                [
-                    $entryMark,
-                    $exitMark,
-                    $obsEntrada,
-                    $obsSalida,
-                    $estadoEntrada,
-                    $estadoSalida,
-                ] = $this->analyzeDay($today, $schedule, $events);
-                
-                // Si tiene ambas marcas en este turno
-                if (($entryMark instanceof \Carbon\Carbon) && ($exitMark instanceof \Carbon\Carbon)) {
-                    $hasCompleteTurn = true;
-                    break;
-                }
-            }
-            
-            if ($hasCompleteTurn) {
-                $employeesWithCompleteMarks++;
+{
+    $today = Carbon::today('America/Lima');
+    $now   = Carbon::now('America/Lima');
+    $dayOfWeek = $today->dayOfWeekIso;
+
+    $employees = Employee::all();
+
+    $totalTurnsToday   = 0; // todos los turnos programados hoy
+    $closedTurnsToday  = 0; // turnos cerrados (marcó salida o ya pasó su ventana)
+
+    foreach ($employees as $employee) {
+
+        // Horarios activos para HOY
+        $schedules = WorkSchedule::where('employee_no', $employee->employee_no)
+            ->whereDate('start_date', '<=', $today)
+            ->where(function ($query) use ($today) {
+                $query->whereNull('end_date')
+                      ->orWhereDate('end_date', '>=', $today);
+            })
+            ->get();
+
+        // Filtrar por día de semana
+        $activeSchedules = $schedules->filter(function ($sch) use ($dayOfWeek) {
+            $workDays = is_array($sch->work_days) ? $sch->work_days : [];
+            return in_array($dayOfWeek, $workDays);
+        });
+
+        if ($activeSchedules->isEmpty()) continue;
+
+        // Eventos del empleado HOY
+        $events = AttendanceEvent::where('employee_no', $employee->employee_no)
+            ->whereDate('event_time', $today)
+            ->orderBy('event_time')
+            ->get();
+
+        foreach ($activeSchedules as $schedule) {
+            $totalTurnsToday++;
+
+            // Reutilizamos tu lógica (esto ya calcula entrada/salida del turno)
+            [
+                $entryMark,
+                $exitMark,
+                $obsEntrada,
+                $obsSalida,
+                $estadoEntrada,
+                $estadoSalida,
+            ] = $this->analyzeDay($today, $schedule, $events);
+
+            // Ventana de salida (igual que analyzeDay)
+            $exitAt = Carbon::parse($today->toDateString().' '.$schedule->exit_time, 'America/Lima');
+            $exitMinus = (int) ($schedule->exit_minus ?? 0);
+            $exitPlus  = (int) ($schedule->exit_plus ?? 0);
+            $exitWindowEnd = $exitAt->copy()->addMinutes($exitPlus);
+
+            // ✅ TURNO CERRADO:
+            // - si ya marcó salida
+            // - o si ya pasó la ventana de salida (aunque sea falta / anticipada)
+            $turnClosed = ($exitMark instanceof \Carbon\Carbon) || $now->gt($exitWindowEnd);
+
+            if ($turnClosed) {
+                $closedTurnsToday++;
             }
         }
-        
-        return [
-            'total' => $totalScheduledEmployees,
-            'with_marks' => $employeesWithCompleteMarks,
-        ];
     }
-    
+
+    return [
+        'total' => $totalTurnsToday,
+        'closed' => $closedTurnsToday,
+        'pending' => max(0, $totalTurnsToday - $closedTurnsToday),
+    ];
+}
+
+  
+    /**
+ * Cuenta cuántos empleados programados HOY ya marcaron al menos 1 vez (entrada o salida)
+ * (No exige completar E+S, solo cualquier marca hoy)
+ */
+private function getTodayMarkingCount()
+{
+    $today = Carbon::today('America/Lima');
+    $dayOfWeek = $today->dayOfWeekIso;
+
+    $employees = Employee::all();
+
+    $totalScheduledEmployees = 0;
+    $employeesWithAnyMark = 0;
+
+    foreach ($employees as $employee) {
+
+        // Horarios activos para HOY
+        $schedules = WorkSchedule::where('employee_no', $employee->employee_no)
+            ->whereDate('start_date', '<=', $today)
+            ->where(function ($query) use ($today) {
+                $query->whereNull('end_date')
+                      ->orWhereDate('end_date', '>=', $today);
+            })
+            ->get();
+
+        // Filtrar por día
+        $activeSchedules = $schedules->filter(function ($sch) use ($dayOfWeek) {
+            $workDays = is_array($sch->work_days) ? $sch->work_days : [];
+            return in_array($dayOfWeek, $workDays);
+        });
+
+        if ($activeSchedules->isEmpty()) {
+            continue;
+        }
+
+        // Está programado hoy
+        $totalScheduledEmployees++;
+
+        // ¿Tiene AL MENOS 1 evento hoy?
+        $hasAnyMarkToday = AttendanceEvent::where('employee_no', $employee->employee_no)
+            ->whereDate('event_time', $today)
+            ->exists();
+
+        if ($hasAnyMarkToday) {
+            $employeesWithAnyMark++;
+        }
+    }
+
+    return [
+        'total' => $totalScheduledEmployees,
+        'with_marks' => $employeesWithAnyMark, // “marcaron algo hoy”
+    ];
+}
+
+
+
+
     /**
      * Obtiene todos los turnos de hoy con el estado de marcación de cada empleado
      */

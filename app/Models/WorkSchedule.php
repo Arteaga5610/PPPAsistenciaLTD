@@ -17,10 +17,10 @@ class WorkSchedule extends Model
     ];
 
     protected $casts = [
-        'work_days' => 'array',
-        'start_date' => 'date',
-        'end_date'   => 'date',
-    ];
+    'work_days'  => 'array',
+    'start_date' => 'date',
+    'end_date'   => 'date',
+];
 
     public function employee()
     {
