@@ -18,7 +18,7 @@
     flex-wrap: wrap;
     gap: 12px;
   }
-  
+
   .page-title-section h1 {
     font-size: 24px;
     font-weight: 700;
@@ -28,13 +28,13 @@
     align-items: center;
     gap: 10px;
   }
-  
+
   .page-subtitle {
     color: #7f8c8d;
     font-size: 14px;
     margin: 0;
   }
-  
+
   .btn-new {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -50,37 +50,46 @@
     align-items: center;
     gap: 8px;
   }
-  
+
   .btn-new:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     color: white;
   }
-  
+
   .data-table-section {
     background: white;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.08);
     overflow: hidden;
   }
-  
+
   .table-header {
     padding: 12px 14px;
     border-bottom: 1px solid #e9ecef;
   }
-  
+
   .table-header h2 {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
     color: #2c3e50;
   }
-  
+
+  /* ✅ Scroll horizontal REAL (igual que empleados) */
+  .table-responsive{
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: auto;
+    min-width: 980px; /* fuerza ancho para que aparezca scroll */
   }
-  
+
   thead th {
     background: #f8f9fa;
     font-weight: 600;
@@ -91,32 +100,34 @@
     padding: 10px 12px;
     text-align: left;
     border-bottom: 2px solid #e9ecef;
+    white-space: nowrap; /* evita salto y rompe menos */
   }
-  
+
   tbody tr {
     transition: background-color 0.15s ease;
     border-bottom: 1px solid #f1f3f5;
   }
-  
+
   tbody tr:hover {
     background-color: #f8f9fa;
   }
-  
+
   tbody td {
     padding: 10px 12px;
     font-size: 14px;
     color: #2c3e50;
+    white-space: nowrap; /* clave para que no se aplaste */
   }
-  
+
   tbody tr:last-child {
     border-bottom: none;
   }
-  
+
   .employee-name {
     font-weight: 600;
     color: #2c3e50;
   }
-  
+
   .badge {
     background: #e7f5ff;
     color: #0c8599;
@@ -126,7 +137,7 @@
     font-size: 12px;
     font-weight: 600;
   }
-  
+
   .time-badge {
     display: inline-flex;
     align-items: center;
@@ -137,14 +148,16 @@
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
+    margin-right: 6px;
   }
-  
+
   .days-list {
     display: flex;
     gap: 4px;
     flex-wrap: wrap;
+    white-space: normal; /* aquí SÍ permitimos wrap para chips */
   }
-  
+
   .day-chip {
     background: #e8f5e9;
     color: #2e7d32;
@@ -153,11 +166,11 @@
     font-size: 11px;
     font-weight: 600;
   }
-  
+
   td.actions {
     white-space: nowrap;
   }
-  
+
   td.actions a,
   td.actions button {
     display: inline-block;
@@ -170,50 +183,51 @@
     transition: all 0.15s ease;
     border: none;
     cursor: pointer;
+    white-space: nowrap;
   }
-  
+
   td.actions a:first-child {
     background: #fff3cd;
     color: #856404;
   }
-  
+
   td.actions a:first-child:hover {
     background: #ffc107;
     color: #fff;
   }
-  
+
   td.actions .btn-delete {
     background: #f8d7da;
     color: #721c24;
   }
-  
+
   td.actions .btn-delete:hover {
     background: #dc3545;
     color: #fff;
   }
-  
+
   .empty-state {
     padding: 60px 20px;
     text-align: center;
   }
-  
+
   .empty-state-icon {
     font-size: 48px;
     margin-bottom: 15px;
     opacity: 0.5;
   }
-  
+
   .empty-state h3 {
     color: #2c3e50;
     font-size: 18px;
     margin: 0 0 10px 0;
   }
-  
+
   .empty-state p {
     color: #7f8c8d;
     margin: 0;
   }
-  
+
   /* Paginación */
   .pagination-section {
     padding: 20px 25px;
@@ -224,7 +238,7 @@
     flex-wrap: wrap;
     gap: 15px;
   }
-  
+
   .pagination-info {
     color: #6c757d;
     font-size: 14px;
@@ -258,6 +272,7 @@
     background: white;
     transition: all 0.2s ease;
     cursor: pointer;
+    white-space: nowrap;
   }
 
   .pagination-btn:hover:not(.disabled) {
@@ -337,7 +352,6 @@
     }
   }
 
-  /* Additional responsive tweaks: make page narrower gaps on small screens */
   @media (max-width: 640px) {
     .schedules-page { padding: 6px; }
     .page-header { padding: 10px 12px; }
@@ -351,7 +365,7 @@
 </style>
 
 <div class="schedules-page">
-  
+
   <!-- Header -->
   <div class="page-header">
     <div class="page-title-section">
@@ -363,7 +377,7 @@
       </h1>
       <p class="page-subtitle">Gestiona los horarios asignados a cada empleado</p>
     </div>
-    
+
     <a class="btn-new" href="{{ route('horarios.create') }}">
       <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
         <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
@@ -377,111 +391,110 @@
     <div class="table-header">
       <h2>Lista de Horarios Asignados</h2>
     </div>
-    
+
     <div class="table-responsive">
       <table>
-      <thead>
-        <tr>
-          <th>Empleado</th>
-          <th>Employee No</th>
-          <th>Horario</th>
-          <th>Días Laborales</th>
-          <th>Plantilla</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-      @forelse($schedules as $schedule)
-        <tr>
-          <td>
-            <span class="employee-name">{{ $schedule->employee->name ?? 'N/A' }}</span>
-          </td>
-          <td>
-            <span class="badge">{{ $schedule->employee_no }}</span>
-          </td>
-          <td>
-            <span class="time-badge">
-              <i class="fas fa-sign-in-alt"></i> {{ $schedule->entry_time ?? '--:--' }}
-            </span>
-            <span class="time-badge">
-              <i class="fas fa-sign-out-alt"></i> {{ $schedule->exit_time ?? '--:--' }}
-            </span>
-          </td>
-          <td>
-            @if($schedule->work_days)
-              <div class="days-list">
-                @foreach($schedule->work_days as $day)
-                  <span class="day-chip">
-                    @switch($day)
-                      @case('monday') Lun @break
-                      @case('tuesday') Mar @break
-                      @case('wednesday') Mié @break
-                      @case('thursday') Jue @break
-                      @case('friday') Vie @break
-                      @case('saturday') Sáb @break
-                      @case('sunday') Dom @break
-                      @case(1) Lun @break
-                      @case(2) Mar @break
-                      @case(3) Mié @break
-                      @case(4) Jue @break
-                      @case(5) Vie @break
-                      @case(6) Sáb @break
-                      @case(7) Dom @break
-                      @default {{ $day }}
-                    @endswitch
+        <thead>
+          <tr>
+            <th>Empleado</th>
+            <th>Employee No</th>
+            <th>Horario</th>
+            <th>Días Laborales</th>
+            <th>Plantilla</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse($schedules as $schedule)
+            <tr>
+              <td>
+                <span class="employee-name">{{ $schedule->employee->name ?? 'N/A' }}</span>
+              </td>
+              <td>
+                <span class="badge">{{ $schedule->employee_no }}</span>
+              </td>
+              <td>
+                <span class="time-badge">
+                  <i class="fas fa-sign-in-alt"></i> {{ $schedule->entry_time ?? '--:--' }}
+                </span>
+                <span class="time-badge">
+                  <i class="fas fa-sign-out-alt"></i> {{ $schedule->exit_time ?? '--:--' }}
+                </span>
+              </td>
+              <td>
+                @if($schedule->work_days)
+                  <div class="days-list">
+                    @foreach($schedule->work_days as $day)
+                      <span class="day-chip">
+                        @switch($day)
+                          @case('monday') Lun @break
+                          @case('tuesday') Mar @break
+                          @case('wednesday') Mié @break
+                          @case('thursday') Jue @break
+                          @case('friday') Vie @break
+                          @case('saturday') Sáb @break
+                          @case('sunday') Dom @break
+                          @case(1) Lun @break
+                          @case(2) Mar @break
+                          @case(3) Mié @break
+                          @case(4) Jue @break
+                          @case(5) Vie @break
+                          @case(6) Sáb @break
+                          @case(7) Dom @break
+                          @default {{ $day }}
+                        @endswitch
+                      </span>
+                    @endforeach
+                  </div>
+                @else
+                  <span style="color: #999;">Sin días definidos</span>
+                @endif
+              </td>
+              <td>
+                @if($schedule->template)
+                  <span style="color: #667eea; font-weight: 600;">
+                    <i class="fas fa-clipboard-list"></i> {{ $schedule->template->name }}
                   </span>
-                @endforeach
-              </div>
-            @else
-              <span style="color: #999;">Sin días definidos</span>
-            @endif
-          </td>
-          <td>
-            @if($schedule->template)
-              <span style="color: #667eea; font-weight: 600;">
-                <i class="fas fa-clipboard-list"></i> {{ $schedule->template->name }}
-              </span>
-            @else
-              <span style="color: #999;">Personalizado</span>
-            @endif
-          </td>
-          <td class="actions">
-            <a href="{{ route('horarios.edit', $schedule) }}">Editar</a>
-            <form method="post" action="{{ route('horarios.destroy', $schedule) }}" style="display:inline">
-              @csrf @method('DELETE')
-              <button class="btn-delete" onclick="return confirm('¿Seguro que deseas eliminar este horario?')">Eliminar</button>
-            </form>
-          </td>
-        </tr>
-      @empty
-        <tr>
-          <td colspan="6">
-            <div class="empty-state">
-              <div class="empty-state-icon"><i class="fas fa-calendar-alt"></i></div>
-              <h3>No hay horarios registrados</h3>
-              <p>Crea un nuevo horario para asignar a tus empleados</p>
-            </div>
-          </td>
-        </tr>
-      @endforelse
-      </tbody>
+                @else
+                  <span style="color: #999;">Personalizado</span>
+                @endif
+              </td>
+              <td class="actions">
+                <a href="{{ route('horarios.edit', $schedule) }}">Editar</a>
+                <form method="post" action="{{ route('horarios.destroy', $schedule) }}" style="display:inline">
+                  @csrf @method('DELETE')
+                  <button class="btn-delete" onclick="return confirm('¿Seguro que deseas eliminar este horario?')">Eliminar</button>
+                </form>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">
+                  <div class="empty-state-icon"><i class="fas fa-calendar-alt"></i></div>
+                  <h3>No hay horarios registrados</h3>
+                  <p>Crea un nuevo horario para asignar a tus empleados</p>
+                </div>
+              </td>
+            </tr>
+          @endforelse
+        </tbody>
       </table>
     </div>
-    
+
     @if($schedules->hasPages())
       <div class="pagination-section">
         <div class="pagination-info">
-          Mostrando 
+          Mostrando
           <strong>{{ $schedules->firstItem() ?? 0 }}</strong>
-          a 
+          a
           <strong>{{ $schedules->lastItem() ?? 0 }}</strong>
-          de 
+          de
           <strong>{{ $schedules->total() }}</strong>
           resultados
         </div>
-        
+
         <div class="pagination-controls">
-          {{-- Botón Anterior --}}
           @if ($schedules->onFirstPage())
             <span class="pagination-btn disabled">
               <svg fill="currentColor" viewBox="0 0 16 16">
@@ -498,7 +511,6 @@
             </a>
           @endif
 
-          {{-- Números de página --}}
           <div class="pagination-pages">
             @php
               $currentPage = $schedules->currentPage();
@@ -507,7 +519,6 @@
               $end = min($lastPage, $currentPage + 2);
             @endphp
 
-            {{-- Primera página --}}
             @if ($start > 1)
               <a href="{{ $schedules->url(1) }}" class="pagination-page">1</a>
               @if ($start > 2)
@@ -515,7 +526,6 @@
               @endif
             @endif
 
-            {{-- Páginas del rango --}}
             @for ($page = $start; $page <= $end; $page++)
               @if ($page == $currentPage)
                 <span class="pagination-page active">{{ $page }}</span>
@@ -524,7 +534,6 @@
               @endif
             @endfor
 
-            {{-- Última página --}}
             @if ($end < $lastPage)
               @if ($end < $lastPage - 1)
                 <span class="pagination-ellipsis">...</span>
@@ -533,7 +542,6 @@
             @endif
           </div>
 
-          {{-- Botón Siguiente --}}
           @if ($schedules->hasMorePages())
             <a href="{{ $schedules->nextPageUrl() }}" class="pagination-btn">
               Siguiente
@@ -552,8 +560,7 @@
         </div>
       </div>
     @endif
-    
-  </div>
 
+  </div>
 </div>
 @endsection
